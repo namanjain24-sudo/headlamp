@@ -83,6 +83,21 @@ describe('parseRam', () => {
     expect(parseRam('1e6')).toBe(1000000);
   });
 
+  it('should keep the sign of a negative quantity', () => {
+    // <quantity> ::= <signedNumber><suffix>, and the API server returns a
+    // negative quantity verbatim: resource.ParseQuantity('-1Ki') is -1024 and
+    // serialises back as '-1Ki'. The number match used to start at the first
+    // digit, so the sign was dropped and -1Ki was read as +1024.
+    expect(parseRam('-1')).toBe(-1);
+    expect(parseRam('-1Ki')).toBe(-1024);
+    expect(parseRam('-512Mi')).toBe(-512 * 1024 ** 2);
+    expect(parseRam('-1k')).toBe(-1000);
+    expect(parseRam('-1e3')).toBe(-1000);
+    expect(parseDiskSpace('-1Ki')).toBe(-1024);
+    // A leading plus is also part of the grammar and keeps the value positive.
+    expect(parseRam('+1Gi')).toBe(1024 ** 3);
+  });
+
   it('should parse an exponent written with a sign', () => {
     // The grammar is <decimalExponent> ::= "e" <signedNumber> | "E" <signedNumber>,
     // and the API server returns these verbatim: a limit written as 1e+9 comes
